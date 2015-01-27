@@ -1,0 +1,1 @@
+.\x64\Release\GoogleEval.exe text8_bs1_epoch1.bin questions-words.txt
