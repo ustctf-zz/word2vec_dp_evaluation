@@ -23,6 +23,7 @@
 #include <random>
 #include <io.h>
 #include <set>
+#include <iostream>
 
 enum simType
 { //Similarity type used to define sim score without Context
@@ -320,6 +321,8 @@ void ReadTestData()
 
 	fclose(fid);
 
+	FILE *fout = fopen("eh_tmp.txt", "w");
+	fprintf(fout, "Word 1,Word 2,Human (mean)");
 	FILE *fi = fopen(ehdataFile, "r");
 
 	char* token, *p;
@@ -372,9 +375,12 @@ void ReadTestData()
 		ehdata[idx].id = idx;
 		if (strcmp(ehdata[idx].word0, "star") == 0 && strcmp(ehdata[idx].word1, "star") == 0)
 			special_idx = idx;
+		
+		fprintf(fout, "%s,%s,%.2f\n", ehdata[idx].word0, ehdata[idx].word1, ehdata[idx].goldSimScore);
 		idx++;
 	}
-	
+
+	fclose(fout);
 	fclose(fi);
 
 	if(isTfIdf)
@@ -434,13 +440,12 @@ void ReadInputEmbeddings()
 	for(int i = 0; i < vocabSize; ++i)
 	{
 		reader.ReadString(word);
-		
 		trie.Insert(word);
 		
 		wordsInfo[i].idxInInput = idx;
 		strcpy(wordsInfo[i].word, word);
-		
 		wordsInfo[i].prototypeCnt = reader.ReadInt();
+		//printf("%s %d\n", word, wordsInfo[i].prototypeCnt);
 
 		for(int j = 0; j < wordsInfo[i].prototypeCnt; ++j)
 		{
@@ -448,6 +453,7 @@ void ReadInputEmbeddings()
 
 			for(int k = 0; k < embedDim; ++k)
 				inputEmbedings->dense(k, idx + j) = reader.ReadBinaryFloat();
+			//std::cout << inputEmbedings->dense.col(idx + j).transpose().segment(5, 5) << std::endl;
 
 			inputEmbedings->dense.col(idx + j).normalize();
 		}
@@ -580,6 +586,7 @@ void ComputeEHScores(int currWinSize)
 
 	ele_type aver_eh_score = 0;
 
+	badCnt = 0;
 	for(int j = 0; j < DATA1_SIZE; ++j)
 	{
 		if(ehdata[j].idx0 == -1 || ehdata[j].idx1 == -1)
